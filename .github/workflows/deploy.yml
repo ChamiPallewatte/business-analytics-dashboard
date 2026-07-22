@@ -76,5 +76,5 @@ jobs:
           username: ${{ secrets.HOSTINGER_USER }}
           password: ${{ secrets.HOSTINGER_PASSWORD }}
           local_path: './*'
-          remote_path: 'u383167570/websites/fcUxOu4hZ/public_html/'
+          remote_path: 'websites/fcUxOu4hZ/public_html/'
           delete_remote_files: false
