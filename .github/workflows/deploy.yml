@@ -62,10 +62,16 @@ jobs:
           CACHE_STORE=database
           EOF
 
+      - name: Sanitize Host Server Input
+        run: |
+          RAW_HOST="${{ secrets.HOSTINGER_HOST }}"
+          CLEAN_HOST=$(echo "$RAW_HOST" | sed -E 's#^(sftp|ftp|ftps|https?)://##i' | sed -E 's#/+$##')
+          echo "HOSTINGER_SERVER_HOST=$CLEAN_HOST" >> $GITHUB_ENV
+
       - name: Deploy files via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server: ${{ secrets.HOSTINGER_HOST }}
+          server: ${{ env.HOSTINGER_SERVER_HOST }}
           port: ${{ secrets.HOSTINGER_PORT }}
           username: ${{ secrets.HOSTINGER_USER }}
           password: ${{ secrets.HOSTINGER_PASSWORD }}
