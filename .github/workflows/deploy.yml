@@ -62,13 +62,12 @@ jobs:
           CACHE_STORE=database
           EOF
 
-      - name: Deploy files via SFTP
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+      - name: Deploy files via FTP/FTPS
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.HOSTINGER_HOST }}
-          port: ${{ secrets.HOSTINGER_PORT }}
           username: ${{ secrets.HOSTINGER_USER }}
           password: ${{ secrets.HOSTINGER_PASSWORD }}
-          local_path: './*'
-          remote_path: 'u383167570/websites/fcUxOu4hZ/public_html/'
-          delete_remote_files: false
+          port: ${{ secrets.HOSTINGER_PORT }}
+          protocol: ftps
+          server-dir: u383167570/websites/fcUxOu4hZ/public_html/
