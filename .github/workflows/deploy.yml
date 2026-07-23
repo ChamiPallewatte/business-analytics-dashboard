@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - dev
 
 jobs:
   deploy:
@@ -61,6 +60,10 @@ jobs:
           QUEUE_CONNECTION=database
           CACHE_STORE=database
           EOF
+
+      - name: Clean unnecessary build directories before upload
+        run: |
+          rm -rf node_modules .git .github
 
       - name: Sanitize Host Server Input
         run: |
