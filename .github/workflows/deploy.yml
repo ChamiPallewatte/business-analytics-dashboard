@@ -49,8 +49,8 @@ jobs:
           DB_CONNECTION=mysql
           DB_HOST=localhost
           DB_PORT=3306
-          DB_DATABASE=u383167570_fcUxOu4hZ
-          DB_USERNAME=u383167570_adminuserDB
+          DB_DATABASE=fcUxOu4hZ
+          DB_USERNAME=adminuserDB
           DB_PASSWORD=Smreset123!!!!
 
           SESSION_DRIVER=database
