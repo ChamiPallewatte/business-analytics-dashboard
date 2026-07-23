@@ -4,9 +4,12 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CompanyResource\Pages;
 use App\Models\Company;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables;
@@ -167,8 +170,8 @@ class CompanyResource extends Resource
                     ]),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('suspend')
+                EditAction::make(),
+                Action::make('suspend')
                     ->label(fn (Company $record) => $record->isSuspended() ? 'Activate' : 'Suspend')
                     ->color(fn (Company $record) => $record->isSuspended() ? 'success' : 'danger')
                     ->icon(fn (Company $record) => $record->isSuspended() ? 'heroicon-o-check-circle' : 'heroicon-o-pause-circle')
@@ -177,9 +180,10 @@ class CompanyResource extends Resource
                             'subscription_status' => $record->isSuspended() ? 'active' : 'suspended',
                         ]);
                     }),
+                DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+                DeleteBulkAction::make(),
             ]);
     }
 

@@ -5,6 +5,10 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\Company;
 use App\Models\User;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
@@ -133,18 +137,18 @@ class UserResource extends Resource
                     ]),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('toggle_status')
+                EditAction::make(),
+                Action::make('toggle_status')
                     ->label(fn (User $record) => $record->status === 'suspended' ? 'Activate' : 'Suspend')
                     ->color(fn (User $record) => $record->status === 'suspended' ? 'success' : 'danger')
                     ->icon(fn (User $record) => $record->status === 'suspended' ? 'heroicon-o-check-circle' : 'heroicon-o-pause-circle')
                     ->action(function (User $record) {
                         $record->update(['status' => $record->status === 'suspended' ? 'active' : 'suspended']);
                     }),
-                Tables\Actions\DeleteAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+                DeleteBulkAction::make(),
             ]);
     }
 
