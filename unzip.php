@@ -40,6 +40,12 @@ if (!$extracted && class_exists('ZipArchive')) {
 }
 
 if ($extracted) {
+    // Purge cached config files to force fresh .env load
+    @unlink(__DIR__ . '/bootstrap/cache/config.php');
+    @unlink(__DIR__ . '/bootstrap/cache/routes-v7.php');
+    @unlink(__DIR__ . '/bootstrap/cache/services.php');
+    @unlink(__DIR__ . '/bootstrap/cache/packages.php');
+
     @unlink($zipFile);
     @unlink(__FILE__);
     echo "SUCCESS: Extracted deploy.zip successfully and cleaned up archive.\n";
