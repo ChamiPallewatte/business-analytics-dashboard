@@ -64,10 +64,9 @@ jobs:
 
       - name: Clean unnecessary build directories and prepare storage before upload
         run: |
-          rm -rf node_modules .git .github
+          rm -rf node_modules .git .github vendor
           rm -f bootstrap/cache/config.php bootstrap/cache/routes-v7.php bootstrap/cache/services.php bootstrap/cache/packages.php
           mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache public/uploads
-
 
       - name: Sanitize Host Server Input
         run: |
@@ -75,29 +74,15 @@ jobs:
           CLEAN_HOST=$(echo "$RAW_HOST" | sed -E 's#^(sftp|ftp|ftps|https?)://##i' | sed -E 's#/+$##')
           echo "HOSTINGER_SERVER_HOST=$CLEAN_HOST" >> $GITHUB_ENV
 
-      - name: Create ZIP Archive
-        run: |
-          zip -r deploy.zip . -x "*.git*" "node_modules/*" ".github/*"
-
-      - name: Upload ZIP to Hostinger via SCP
-        uses: appleboy/scp-action@v0.1.7
+      - name: Deploy files via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          host: ${{ env.HOSTINGER_SERVER_HOST }}
+          server: ${{ env.HOSTINGER_SERVER_HOST }}
           port: ${{ secrets.HOSTINGER_PORT }}
           username: ${{ secrets.HOSTINGER_USER }}
           password: ${{ secrets.HOSTINGER_PASSWORD }}
-          source: "deploy.zip"
-          target: "websites/fcUxOu4hZ/public_html/"
+          local_path: './*'
+          remote_path: 'websites/fcUxOu4hZ/public_html/'
+          delete_remote_files: false
 
-      - name: Extract Archive & Clean Up on Hostinger via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ env.HOSTINGER_SERVER_HOST }}
-          port: ${{ secrets.HOSTINGER_PORT }}
-          username: ${{ secrets.HOSTINGER_USER }}
-          password: ${{ secrets.HOSTINGER_PASSWORD }}
-          script: |
-            cd websites/fcUxOu4hZ/public_html
-            unzip -o deploy.zip
-            rm -f deploy.zip
 
