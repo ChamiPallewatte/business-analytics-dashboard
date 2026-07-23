@@ -75,13 +75,29 @@ jobs:
           CLEAN_HOST=$(echo "$RAW_HOST" | sed -E 's#^(sftp|ftp|ftps|https?)://##i' | sed -E 's#/+$##')
           echo "HOSTINGER_SERVER_HOST=$CLEAN_HOST" >> $GITHUB_ENV
 
-      - name: Deploy files via SFTP
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+      - name: Create ZIP Archive
+        run: |
+          zip -r deploy.zip . -x "*.git*" "node_modules/*" ".github/*"
+
+      - name: Upload ZIP to Hostinger via SCP
+        uses: appleboy/scp-action@v0.1.7
         with:
-          server: ${{ env.HOSTINGER_SERVER_HOST }}
+          host: ${{ env.HOSTINGER_SERVER_HOST }}
           port: ${{ secrets.HOSTINGER_PORT }}
           username: ${{ secrets.HOSTINGER_USER }}
           password: ${{ secrets.HOSTINGER_PASSWORD }}
-          local_path: './*'
-          remote_path: 'websites/fcUxOu4hZ/public_html/'
-          delete_remote_files: false
+          source: "deploy.zip"
+          target: "websites/fcUxOu4hZ/public_html/"
+
+      - name: Extract Archive & Clean Up on Hostinger via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ env.HOSTINGER_SERVER_HOST }}
+          port: ${{ secrets.HOSTINGER_PORT }}
+          username: ${{ secrets.HOSTINGER_USER }}
+          password: ${{ secrets.HOSTINGER_PASSWORD }}
+          script: |
+            cd websites/fcUxOu4hZ/public_html
+            unzip -o deploy.zip
+            rm -f deploy.zip
+
