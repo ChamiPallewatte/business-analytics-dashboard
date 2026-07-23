@@ -64,9 +64,19 @@ jobs:
 
       - name: Clean unnecessary build directories and prepare storage before upload
         run: |
-          rm -rf node_modules .git .github vendor
+          rm -rf node_modules .git .github
           rm -f bootstrap/cache/config.php bootstrap/cache/routes-v7.php bootstrap/cache/services.php bootstrap/cache/packages.php
           mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache public/uploads
+
+      - name: Package site into ZIP archive and prepare deploy payload
+        run: |
+          zip -r deploy.zip . -x "deploy.zip"
+          mkdir -p ../deploy_payload
+          mv deploy.zip ../deploy_payload/
+          cp unzip.php ../deploy_payload/
+          rm -rf ./*
+          rm -rf .[^.]*
+          mv ../deploy_payload/* ./
 
       - name: Sanitize Host Server Input
         run: |
@@ -74,7 +84,7 @@ jobs:
           CLEAN_HOST=$(echo "$RAW_HOST" | sed -E 's#^(sftp|ftp|ftps|https?)://##i' | sed -E 's#/+$##')
           echo "HOSTINGER_SERVER_HOST=$CLEAN_HOST" >> $GITHUB_ENV
 
-      - name: Deploy files via SFTP
+      - name: Upload ZIP & Extractor via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server: ${{ env.HOSTINGER_SERVER_HOST }}
@@ -84,5 +94,16 @@ jobs:
           local_path: './*'
           remote_path: 'websites/fcUxOu4hZ/public_html/'
           delete_remote_files: false
+
+      - name: Trigger Web Extraction on Hostinger
+        run: |
+          echo "Extracting deploy archive on Hostinger..."
+          RESPONSE=$(curl -s "https://bussiness-analytics-dashboard.digitalvortexhub.com/unzip.php?key=Dr//fa7uRvBA78A4rhHTCjcMwD5QU44wGVx/Nw95VxU=")
+          echo "Server Response: $RESPONSE"
+          if [[ "$RESPONSE" != *"SUCCESS"* ]]; then
+            echo "Extraction failed!"
+            exit 1
+          fi
+
 
 
