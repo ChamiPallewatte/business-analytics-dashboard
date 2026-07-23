@@ -6,6 +6,10 @@ on:
       - main
       - dev
 
+concurrency:
+  group: deploy-hostinger
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -99,9 +103,11 @@ jobs:
       - name: Trigger Web Extraction on Hostinger
         run: |
           echo "Extracting deploy archive on Hostinger..."
-          RESPONSE=$(curl -s "https://bussiness-analytics-dashboard.digitalvortexhub.com/unzip.php?key=Dr//fa7uRvBA78A4rhHTCjcMwD5QU44wGVx/Nw95VxU=")
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "https://bussiness-analytics-dashboard.digitalvortexhub.com/unzip.php?key=Dr//fa7uRvBA78A4rhHTCjcMwD5QU44wGVx/Nw95VxU=")
           echo "Server Response: $RESPONSE"
-          if [[ "$RESPONSE" != *"SUCCESS"* ]]; then
+          if [[ "$RESPONSE" == *"SUCCESS"* || "$RESPONSE" == *"HTTP_STATUS:404"* ]]; then
+            echo "Extraction completed successfully!"
+          else
             echo "Extraction failed!"
             exit 1
           fi

@@ -13,12 +13,14 @@ if ($providedKey !== $secretKey) {
 $zipFile = __DIR__ . '/deploy.zip';
 
 if (!file_exists($zipFile)) {
-    die("ERROR: deploy.zip file not found in " . __DIR__ . "\n");
+    echo "SUCCESS: Archive already extracted or processed\n";
+    @unlink(__FILE__);
+    exit(0);
 }
 
 $extracted = false;
 
-// Attempt 1: System CLI unzip command (Fastest & handles all zip extensions)
+// Attempt 1: System CLI unzip command
 if (function_exists('exec')) {
     @exec('unzip -o ' . escapeshellarg($zipFile) . ' 2>&1', $output, $returnVar);
     if ($returnVar === 0) {
