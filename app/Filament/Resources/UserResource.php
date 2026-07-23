@@ -42,9 +42,11 @@ class UserResource extends Resource
                             ->maxLength(255),
                         Forms\Components\TextInput::make('password')
                             ->password()
-                            ->decompress(false)
+                            ->dehydrated(fn ($state) => filled($state))
                             ->required(fn ($livewire) => $livewire instanceof Pages\CreateUser)
-                            ->maxLength(255),
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? bcrypt($state) : null)
+                            ->maxLength(255)
+                            ->placeholder('Leave blank to keep current password'),
                     ])->columns(2),
 
                 Section::make('Organization & RBAC Permissions')
