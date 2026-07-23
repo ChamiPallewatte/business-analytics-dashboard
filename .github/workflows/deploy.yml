@@ -51,11 +51,11 @@ jobs:
           LOG_LEVEL=debug
 
           DB_CONNECTION=mysql
-          DB_HOST=localhost
-          DB_PORT=3306
-          DB_DATABASE=fcUxOu4hZ
-          DB_USERNAME=adminuserDB
-          DB_PASSWORD=Smreset123!!!!
+          DB_HOST=${{ secrets.DB_HOST || 'localhost' }}
+          DB_PORT=${{ secrets.DB_PORT || '3306' }}
+          DB_DATABASE=${{ secrets.DB_DATABASE || 'fcUxOu4hZ' }}
+          DB_USERNAME=${{ secrets.DB_USERNAME || 'adminuserDB' }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD || 'Smreset123!!!!' }}
 
           SESSION_DRIVER=database
           SESSION_LIFETIME=120
