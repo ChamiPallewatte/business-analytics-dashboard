@@ -21,6 +21,7 @@ class SettingsPage extends Page implements HasForms
     protected string $view = 'filament.pages.settings-page';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cog-6-tooth';
+    protected static \UnitEnum|string|null $navigationGroup = 'Settings & Logs';
     protected static ?string $navigationLabel = 'Settings';
     protected static ?int $navigationSort = 11;
     protected static ?string $title = 'System Settings';
@@ -29,7 +30,7 @@ class SettingsPage extends Page implements HasForms
 
     public static function canAccess(): bool
     {
-        return auth()->user()->isAdmin();
+        return auth()->check() && (auth()->user()->isSuperAdmin() || auth()->user()->isCompanyAdmin() || auth()->user()->isAdmin());
     }
 
     public function mount(): void
