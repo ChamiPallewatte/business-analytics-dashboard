@@ -46,24 +46,24 @@ class UserResource extends Resource
                 Section::make('Organization & RBAC Permissions')
                     ->schema([
                         Forms\Components\Select::make('company_id')
-                            ->label('Assigned Company')
+                            ->label('Assigned Company Workspace')
                             ->relationship('company', 'name')
                             ->searchable()
                             ->preload()
-                            ->visible(fn () => auth()->user()->isSuperAdmin()),
+                            ->visible(fn () => auth()->user()?->isSuperAdmin()),
                         Forms\Components\Select::make('role')
                             ->label('User Role')
                             ->options([
-                                'super_admin' => 'Super Admin (Platform Owner)',
+                                'super_admin' => 'Super Admin (Platform Control)',
                                 'company_admin' => 'Company Admin (Workspace Owner)',
                                 'employee' => 'Employee (Standard Access)',
                             ])
                             ->required()
                             ->default('employee'),
                         Forms\Components\TextInput::make('department')
-                            ->placeholder('e.g. Sales, Marketing, IT'),
+                            ->placeholder('e.g. Sales, Operations, IT'),
                         Forms\Components\TextInput::make('position')
-                            ->placeholder('e.g. Senior Manager, Analyst'),
+                            ->placeholder('e.g. Director, Manager, Staff'),
                         Forms\Components\Select::make('status')
                             ->options([
                                 'active' => 'Active',
@@ -92,7 +92,7 @@ class UserResource extends Resource
                     ->sortable()
                     ->badge()
                     ->color('info')
-                    ->visible(fn () => auth()->user()->isSuperAdmin()),
+                    ->placeholder('Global (Super Admin)'),
                 Tables\Columns\TextColumn::make('role')
                     ->label('Role')
                     ->badge()
@@ -116,6 +116,10 @@ class UserResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('company_id')
+                    ->label('Filter by Company')
+                    ->relationship('company', 'name')
+                    ->visible(fn () => auth()->user()?->isSuperAdmin()),
                 Tables\Filters\SelectFilter::make('role')
                     ->options([
                         'super_admin' => 'Super Admin',
@@ -130,6 +134,14 @@ class UserResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('toggle_status')
+                    ->label(fn (User $record) => $record->status === 'suspended' ? 'Activate' : 'Suspend')
+                    ->color(fn (User $record) => $record->status === 'suspended' ? 'success' : 'danger')
+                    ->icon(fn (User $record) => $record->status === 'suspended' ? 'heroicon-o-check-circle' : 'heroicon-o-pause-circle')
+                    ->action(function (User $record) {
+                        $record->update(['status' => $record->status === 'suspended' ? 'active' : 'suspended']);
+                    }),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),

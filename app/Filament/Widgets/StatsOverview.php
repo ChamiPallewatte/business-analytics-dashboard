@@ -16,7 +16,12 @@ class StatsOverview extends StatsOverviewWidget
 {
     use InteractsWithPageFilters;
 
-    protected static ?int $sort = 1; // Show first
+    protected static ?int $sort = 1;
+
+    public static function canView(): bool
+    {
+        return auth()->check() && !auth()->user()->isSuperAdmin();
+    }
 
     protected function getStats(): array
     {

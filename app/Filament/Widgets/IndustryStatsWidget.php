@@ -14,6 +14,11 @@ class IndustryStatsWidget extends BaseWidget
 {
     protected static ?int $sort = 1;
 
+    public static function canView(): bool
+    {
+        return auth()->check() && !auth()->user()->isSuperAdmin();
+    }
+
     protected function getStats(): array
     {
         $company = auth()->user()?->company;

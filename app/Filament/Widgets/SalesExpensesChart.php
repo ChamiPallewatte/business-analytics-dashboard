@@ -14,7 +14,12 @@ class SalesExpensesChart extends ChartWidget
     use InteractsWithPageFilters;
 
     protected ?string $heading = 'Sales vs Expenses Overview';
-    protected static ?int $sort = 2; // Show second
+    protected static ?int $sort = 2;
+
+    public static function canView(): bool
+    {
+        return auth()->check() && !auth()->user()->isSuperAdmin();
+    }
 
     protected function getData(): array
     {
