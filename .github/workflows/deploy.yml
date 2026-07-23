@@ -94,6 +94,7 @@ jobs:
           local_path: './*'
           remote_path: 'websites/fcUxOu4hZ/public_html/'
           delete_remote_files: false
+          sftp_only: true
 
       - name: Trigger Web Extraction on Hostinger
         run: |
