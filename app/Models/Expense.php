@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Expense extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCompany;
 
     protected $fillable = [
+        'company_id',
         'client_id',
         'service_id',
         'type',
@@ -64,11 +66,10 @@ class Expense extends Model
         return $this->belongsTo(Service::class);
     }
 
-    /**
-     * Audit log triggers.
-     */
     protected static function booted()
     {
+        static::bootBelongsToCompany();
+
         static::created(function (Expense $expense) {
             ActivityLog::log('Created Expense', Expense::class, $expense->id, "Type: {$expense->type}, Amount: {$expense->amount}");
         });

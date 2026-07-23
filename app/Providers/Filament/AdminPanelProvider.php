@@ -2,24 +2,22 @@
 
 namespace App\Providers\Filament;
 
+use App\Models\Company;
+use App\Models\Setting;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-
-use App\Models\Setting;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -30,7 +28,8 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName(fn () => Setting::get('company_name', 'AIWA AGENCY'))
+            ->tenant(Company::class, slugAttribute: 'slug')
+            ->brandName(fn () => auth()->user()?->company?->name ?? 'SaaS Analytics Platform')
             ->profile(\App\Filament\Pages\Auth\EditProfile::class)
             ->colors([
                 'primary' => Color::Blue,
@@ -38,6 +37,14 @@ class AdminPanelProvider extends PanelProvider
                 'success' => Color::Emerald,
                 'danger' => Color::Rose,
                 'warning' => Color::Amber,
+            ])
+            ->navigationGroups([
+                'Platform Administration',
+                'User & Access Management',
+                'Operations & Clients',
+                'Financial Management',
+                'Analytics & Insights',
+                'Settings & Logs',
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
@@ -47,17 +54,18 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
                 AccountWidget::class,
+                \App\Filament\Widgets\SuperAdminPlatformStatsWidget::class,
+                \App\Filament\Widgets\IndustryStatsWidget::class,
             ])
             ->renderHook(
                 \Filament\View\PanelsRenderHook::HEAD_END,
                 fn () => new \Illuminate\Support\HtmlString('
                     <style>
-                        /* Custom Sidebar Navy Blue Style */
+                        /* Modern Dark/Glassmorphic Sidebar styling */
                         .fi-sidebar {
-                            background-color: #0a162c !important;
+                            background: linear-gradient(180deg, #0b132b 0%, #1c2541 100%) !important;
                             border-right: 1px solid #1e293b !important;
                         }
-                        /* Active sidebar items */
                         .fi-sidebar-item-active, 
                         .fi-sidebar-item-active a, 
                         .fi-sidebar-item-active span,
@@ -66,29 +74,29 @@ class AdminPanelProvider extends PanelProvider
                         .fi-sidebar-group a.fi-active * {
                             background-color: #2563eb !important;
                             color: #ffffff !important;
+                            border-radius: 0.5rem !important;
                         }
-                        /* Inactive sidebar items - visibility fix */
                         .fi-sidebar-item:not(.fi-sidebar-item-active) a,
                         .fi-sidebar-item:not(.fi-sidebar-item-active) button,
                         .fi-sidebar-item:not(.fi-sidebar-item-active) span,
                         .fi-sidebar-item:not(.fi-sidebar-item-active) svg {
                             color: #94a3b8 !important;
                         }
-                        /* Inactive items hover states */
                         .fi-sidebar-item:not(.fi-sidebar-item-active) a:hover,
-                        .fi-sidebar-item:not(.fi-sidebar-item-active) button:hover,
-                        .fi-sidebar-item:not(.fi-sidebar-item-active) a:hover *,
-                        .fi-sidebar-item:not(.fi-sidebar-item-active) button:hover * {
+                        .fi-sidebar-item:not(.fi-sidebar-item-active) button:hover {
                             color: #ffffff !important;
-                            background-color: #162a45 !important;
+                            background-color: #1e293b !important;
+                            border-radius: 0.5rem !important;
                         }
                         .fi-sidebar-nav-label, .fi-sidebar-group-label {
-                            color: #94a3b8 !important;
+                            color: #64748b !important;
+                            font-weight: 600 !important;
+                            text-transform: uppercase !important;
+                            letter-spacing: 0.05em !important;
                         }
                         .fi-sidebar-header {
                             border-bottom: 1px solid #1e293b !important;
                         }
-                        /* Global status colors overrides for status badges to match mockup */
                         .fi-badge-color-success {
                             background-color: #10b981 !important;
                             color: #ffffff !important;

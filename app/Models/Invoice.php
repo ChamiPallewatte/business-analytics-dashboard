@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,9 +10,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Invoice extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCompany;
 
     protected $fillable = [
+        'company_id',
         'invoice_number',
         'currency',
         'client_id',
@@ -72,17 +74,17 @@ class Invoice extends Model
         return $this->hasMany(Payment::class);
     }
 
-    /**
-     * Auto-calculate VAT, Total and auto-generate invoice number.
-     */
     protected static function booted()
     {
+        static::bootBelongsToCompany();
+
         static::creating(function (Invoice $invoice) {
             if (empty($invoice->invoice_number)) {
                 $year = date('Y');
-                $latest = static::whereYear('created_at', $year)->latest()->first();
-                $seq = $latest ? ((int) substr($latest->invoice_number, -4)) + 1 : 1;
-                $invoice->invoice_number = sprintf('INV-%s-%04d', $year, $seq);
+                $latest = static::withoutGlobalScopes()->latest('id')->first();
+                $seq = $latest ? ($latest->id + 1) : 1;
+                $companyPrefix = $invoice->company_id ? sprintf('C%02d-', $invoice->company_id) : '';
+                $invoice->invoice_number = sprintf('INV-%s%s-%04d', $companyPrefix, $year, $seq);
             }
         });
 
@@ -92,35 +94,14 @@ class Invoice extends Model
         });
     }
 
-    /**
-     * Recalculate status and balance based on associated payments.
-     */
     public function updatePaymentStatus()
     {
         $totalPaid = $this->payments()->sum('amount');
-        $balance = max(0, $this->total_amount - $totalPaid);
-
-        if ($balance <= 0) {
+        if ($totalPaid >= $this->total_amount) {
             $this->status = 'Paid';
         } elseif ($totalPaid > 0) {
             $this->status = 'Partially Paid';
-        } else {
-            // Check if overdue
-            if ($this->due_date && $this->due_date->isPast() && $this->status !== 'Cancelled') {
-                $this->status = 'Overdue';
-            } else {
-                $this->status = 'Sent';
-            }
         }
-
         $this->save();
-
-        // Also update parent service if linked
-        if ($this->service) {
-            $this->service->paid_amount = Payment::whereHas('invoice', function ($q) {
-                $q->where('service_id', $this->service_id);
-            })->sum('amount');
-            $this->service->save();
-        }
     }
 }

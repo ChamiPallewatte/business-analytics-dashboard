@@ -2,47 +2,49 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Setting extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCompany;
 
     protected $fillable = [
+        'company_id',
         'key',
         'value',
     ];
 
-    /**
-     * Get value for setting key.
-     */
     public static function get(string $key, $default = null)
     {
-        $setting = static::where('key', $key)->first();
+        $companyId = auth()->check() ? auth()->user()->company_id : null;
+        $query = static::where('key', $key);
+        if ($companyId) {
+            $query->where('company_id', $companyId);
+        }
+        $setting = $query->first();
         return $setting ? $setting->value : $default;
     }
 
-    /**
-     * Set value for setting key.
-     */
     public static function set(string $key, $value)
     {
-        return static::updateOrCreate(['key' => $key], ['value' => $value]);
+        $companyId = auth()->check() ? auth()->user()->company_id : null;
+        return static::updateOrCreate(
+            ['company_id' => $companyId, 'key' => $key],
+            ['value' => $value]
+        );
     }
 
-    /**
-     * Get currency code based on default country.
-     */
     public static function getCurrency(): string
     {
+        if (auth()->check() && auth()->user()->company) {
+            return auth()->user()->company->currency ?? 'USD';
+        }
         $country = static::get('default_country', 'United Arab Emirates');
         return static::getCountryCurrency($country);
     }
 
-    /**
-     * Get currency for country.
-     */
     public static function getCountryCurrency(?string $country): string
     {
         $map = [
@@ -55,21 +57,15 @@ class Setting extends Model
             'United States' => 'USD',
             'United Kingdom' => 'GBP',
         ];
-        return $map[$country] ?? 'AED';
+        return $map[$country] ?? 'USD';
     }
 
-    /**
-     * Get standard VAT percent based on default country.
-     */
     public static function getVatPercent(): float
     {
         $country = static::get('default_country', 'United Arab Emirates');
         return static::getCountryVatPercent($country);
     }
 
-    /**
-     * Get standard VAT percent for country.
-     */
     public static function getCountryVatPercent(?string $country): float
     {
         $map = [

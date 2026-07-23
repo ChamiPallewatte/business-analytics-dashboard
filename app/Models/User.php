@@ -2,93 +2,122 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasTenants;
+use Filament\Panel;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasTenants
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
+        'company_id',
         'name',
         'email',
         'password',
-        'role',
+        'role', // super_admin, company_admin, employee
+        'department',
+        'position',
+        'status',
+        'custom_permissions',
+        'two_factor_enabled',
+        'last_login_at',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'custom_permissions' => 'array',
+            'two_factor_enabled' => 'boolean',
+            'last_login_at' => 'datetime',
         ];
     }
 
-    /**
-     * Verify if the user is an admin.
-     */
-    public function isAdmin(): bool
+    public function company(): BelongsTo
     {
-        return $this->role === 'admin';
+        return $this->belongsTo(Company::class);
     }
 
-    /**
-     * Verify if the user is a staff member.
-     */
-    public function isStaff(): bool
+    public function teams(): BelongsToMany
     {
-        return $this->role === 'staff';
+        return $this->belongsToMany(Team::class, 'team_user')->withTimestamps();
     }
 
-    /**
-     * Get clients assigned to this manager (staff/admin).
-     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
+    public function isCompanyAdmin(): bool
+    {
+        return $this->role === 'company_admin' || $this->role === 'admin';
+    }
+
+    public function isEmployee(): bool
+    {
+        return $this->role === 'employee' || $this->role === 'staff';
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        if ($this->isSuperAdmin() || $this->isCompanyAdmin()) {
+            return true;
+        }
+
+        if (is_array($this->custom_permissions)) {
+            return in_array($permission, $this->custom_permissions);
+        }
+
+        return false;
+    }
+
     public function managedClients(): HasMany
     {
         return $this->hasMany(Client::class, 'assigned_manager_id');
     }
 
-    /**
-     * Determine if user can access the panel.
-     */
     public function canAccessPanel(Panel $panel): bool
     {
-        // Both admin and staff can access this panel.
-        // Role permissions will be controlled via Policies and Eloquent scopes.
-        return true;
+        return $this->status === 'active';
     }
 
     /**
-     * Get the user's initials for display (Filament will render initials automatically).
+     * Filament Multi-tenancy: Tenants access
      */
+    public function getTenants(Panel $panel): array|Collection
+    {
+        if ($this->isSuperAdmin()) {
+            return Company::all();
+        }
+
+        return $this->company ? collect([$this->company]) : collect([]);
+    }
+
+    public function canAccessTenant(Model $tenant): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        return $this->company_id === $tenant->id;
+    }
+
     public function getFilamentAvatarUrl(): ?string
     {
         return null;

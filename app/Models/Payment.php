@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Payment extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCompany;
 
     protected $fillable = [
+        'company_id',
         'service_id',
         'invoice_id',
         'amount',
@@ -43,27 +45,20 @@ class Payment extends Model
         'Pending' => 'Pending',
     ];
 
-    /**
-     * Get the service associated with this payment.
-     */
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);
     }
 
-    /**
-     * Get the invoice associated with this payment.
-     */
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
     }
 
-    /**
-     * Lifecycle hooks to update parent service and invoice.
-     */
     protected static function booted()
     {
+        static::bootBelongsToCompany();
+
         static::created(function (Payment $payment) {
             ActivityLog::log('Created Payment', Payment::class, $payment->id, "Amount: {$payment->amount}, Mode: {$payment->payment_method}");
         });
@@ -73,12 +68,10 @@ class Payment extends Model
         });
 
         $updateParentRelations = function (Payment $payment) {
-            // Update parent invoice
             if ($payment->invoice) {
                 $payment->invoice->updatePaymentStatus();
             }
 
-            // Update parent service
             $service = $payment->service;
             if ($service) {
                 $service->paid_amount = $service->payments()->sum('amount');

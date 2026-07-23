@@ -23,6 +23,8 @@ class ServiceResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedWrenchScrewdriver;
 
+    protected static \UnitEnum|string|null $navigationGroup = 'Operations & Clients';
+
     protected static ?string $recordTitleAttribute = 'type';
 
     public static function form(Schema $schema): Schema

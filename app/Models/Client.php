@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,9 +11,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Client extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToCompany;
 
     protected $fillable = [
+        'company_id',
         'name',
         'company_name',
         'business_type',
@@ -37,51 +39,35 @@ class Client extends Model
         'status',
     ];
 
-    /**
-     * Get the manager (user) assigned to this client.
-     */
     public function manager(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_manager_id');
     }
 
-    /**
-     * Get the services associated with this client.
-     */
     public function services(): HasMany
     {
         return $this->hasMany(Service::class);
     }
 
-    /**
-     * Get the documents uploaded for this client.
-     */
     public function documents(): HasMany
     {
         return $this->hasMany(ClientDocument::class);
     }
 
-    /**
-     * Get the invoices associated with this client.
-     */
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
     }
 
-    /**
-     * Get the expenses associated with this client.
-     */
     public function expenses(): HasMany
     {
         return $this->hasMany(Expense::class);
     }
 
-    /**
-     * Audit log triggers.
-     */
     protected static function booted()
     {
+        static::bootBelongsToCompany();
+
         static::created(function (Client $client) {
             ActivityLog::log('Created Client', Client::class, $client->id, "Name: {$client->name}, Company: {$client->company_name}");
         });
