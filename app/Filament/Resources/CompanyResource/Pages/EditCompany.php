@@ -16,4 +16,16 @@ class EditCompany extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    /**
+     * After saving, redirect to the companies list under the updated tenant slug.
+     * This prevents 404 if the company slug was changed along with the name.
+     */
+    protected function getRedirectUrl(): string
+    {
+        // Get the freshly saved record with the new slug
+        $record = $this->getRecord()->fresh();
+
+        return "/admin/{$record->slug}/companies";
+    }
 }

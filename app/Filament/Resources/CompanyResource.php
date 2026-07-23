@@ -36,10 +36,16 @@ class CompanyResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, callable $set) => $set('slug', \Illuminate\Support\Str::slug($state))),
+                            ->afterStateUpdated(function ($state, callable $set, $livewire) {
+                                // Only auto-generate slug on Create, not on Edit
+                                if ($livewire instanceof \App\Filament\Resources\CompanyResource\Pages\CreateCompany) {
+                                    $set('slug', \Illuminate\Support\Str::slug($state));
+                                }
+                            }),
                         Forms\Components\TextInput::make('slug')
                             ->required()
                             ->unique(Company::class, 'slug', ignoreRecord: true)
+                            ->helperText('Changing the slug will update the company workspace URL.')
                             ->maxLength(255),
                         Forms\Components\Select::make('industry_type')
                             ->label('Industry Type')
