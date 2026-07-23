@@ -38,12 +38,12 @@ jobs:
           APP_NAME="AIWA Accounts Portal"
           APP_ENV=production
           APP_KEY=base64:Dr//fa7uRvBA78A4rhHTCjcMwD5QU44wGVx/Nw95VxU=
-          APP_DEBUG=false
+          APP_DEBUG=true
           APP_URL=https://bussiness-analytics-dashboard.digitalvortexhub.com
 
           LOG_CHANNEL=stack
           LOG_STACK=single
-          LOG_LEVEL=error
+          LOG_LEVEL=debug
 
           DB_CONNECTION=mysql
           DB_HOST=127.0.0.1
@@ -61,9 +61,12 @@ jobs:
           CACHE_STORE=database
           EOF
 
-      - name: Clean unnecessary build directories before upload
+      - name: Clean unnecessary build directories and prepare storage before upload
         run: |
           rm -rf node_modules .git .github
+          rm -f bootstrap/cache/config.php bootstrap/cache/routes-v7.php bootstrap/cache/services.php bootstrap/cache/packages.php
+          mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache public/uploads
+
 
       - name: Sanitize Host Server Input
         run: |

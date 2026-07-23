@@ -31,26 +31,6 @@
 
 
 # -----------------------------------------------------------------------
-# PHP Limits — prevent 504 Gateway Timeout on Hostinger shared hosting
-# -----------------------------------------------------------------------
-<IfModule mod_php.c>
-    php_value max_execution_time 300
-    php_value max_input_time 300
-    php_value memory_limit 256M
-    php_value post_max_size 64M
-    php_value upload_max_filesize 64M
-</IfModule>
-
-# PHP 8.x (php8_module)
-<IfModule php8_module>
-    php_value max_execution_time 300
-    php_value max_input_time 300
-    php_value memory_limit 256M
-    php_value post_max_size 64M
-    php_value upload_max_filesize 64M
-</IfModule>
-
-# -----------------------------------------------------------------------
 # Static asset caching — reduce load on every request
 # -----------------------------------------------------------------------
 <IfModule mod_expires.c>
