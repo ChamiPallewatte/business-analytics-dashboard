@@ -67,11 +67,12 @@ class CompanyResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('subscription_plan')
                             ->options([
+                                'free' => 'Free Plan ($0/mo)',
                                 'basic' => 'Basic Plan ($49/mo)',
                                 'pro' => 'Professional Plan ($149/mo)',
                                 'enterprise' => 'Enterprise Plan ($499/mo)',
                             ])
-                            ->default('pro')
+                            ->default('free')
                             ->required(),
                         Forms\Components\Select::make('subscription_status')
                             ->options([
@@ -134,6 +135,8 @@ class CompanyResource extends Resource
                     ->color(fn (string $state): string => match ($state) {
                         'enterprise' => 'success',
                         'pro' => 'primary',
+                        'basic' => 'warning',
+                        'free' => 'gray',
                         default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('subscription_status')
